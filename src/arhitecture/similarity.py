@@ -96,7 +96,6 @@ class TverskySimilarity(nn.Module):
                 + self.theta
             )
             return f_intersect / denominator
-        raise ValueError(f"Unknown model_type: {self.model_type}")
 
     def _reduce_intersection(
         self, a_proj: torch.Tensor, b_proj: torch.Tensor
