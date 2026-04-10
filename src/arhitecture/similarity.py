@@ -17,8 +17,7 @@ class TverskySimilarity(nn.Module):
         alpha: float = 0.5,
         beta: float = 0.5,
         model_type: ModelType | str = ModelType.RATIO,
-        intersection_reduction: IntersectionReductionType
-        | str = IntersectionReductionType.MIN,
+        intersection_reduction: IntersectionReductionType | str = IntersectionReductionType.MIN,
         difference_type: DifferenceType | str = DifferenceType.SUBTRACT_MATCH,
     ) -> None:
         super().__init__()
@@ -54,6 +53,19 @@ class TverskySimilarity(nn.Module):
         a_proj = a @ self.feature_bank
         b_proj = b @ self.feature_bank
 
+        return self.forward_from_projections(a_proj, b_proj)
+
+    def forward_from_projections(self, a_proj: torch.Tensor, b_proj: torch.Tensor) -> torch.Tensor:
+        """
+        Альтернативный прямой проход, если входные данные уже проецированы на банк признаков.
+
+        Args:
+            a_proj (torch.Tensor): Проекция запросов. Форма: (..., num_features)
+            b_proj (torch.Tensor): Проекция ключей. Форма: (..., num_features)
+
+        Returns:
+            torch.Tensor: Тензор мер сходства. Форма: (...)
+        """
         a_pos_mask = (a_proj > 0).float()
         b_pos_mask = (b_proj > 0).float()
 
@@ -66,23 +78,14 @@ class TverskySimilarity(nn.Module):
 
         match self.model_type:
             case ModelType.CONTRAST:
-                return (
-                    self.theta * f_intersect
-                    - self.alpha * f_a_minus_b
-                    - self.beta * f_b_minus_a
-                )
+                return self.theta * f_intersect - self.alpha * f_a_minus_b - self.beta * f_b_minus_a
             case ModelType.RATIO:
                 denominator = (
-                    f_intersect
-                    + self.alpha * f_a_minus_b
-                    + self.beta * f_b_minus_a
-                    + self.theta
+                    f_intersect + self.alpha * f_a_minus_b + self.beta * f_b_minus_a + self.theta
                 )
                 return f_intersect / denominator
 
-    def _reduce_intersection(
-        self, a_proj: torch.Tensor, b_proj: torch.Tensor
-    ) -> torch.Tensor:
+    def _reduce_intersection(self, a_proj: torch.Tensor, b_proj: torch.Tensor) -> torch.Tensor:
         """Агрегация общих признаков на основе выбранного метода Ψ."""
         match self.intersection_reduction:
             case IntersectionReductionType.MIN:
