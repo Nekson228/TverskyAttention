@@ -19,6 +19,8 @@ class TverskyMultiHeadAttentionDropIn(nn.Module):
         num_features: int,
         shared_omega: Optional[nn.Parameter] = None,
         model_type: ModelType | str = ModelType.CONTRAST,
+        intersection_reduction: IntersectionReductionType | str = IntersectionReductionType.PRODUCT,
+        difference_type: DifferenceType | str = DifferenceType.SUBTRACT_MATCH,
     ) -> None:
         super().__init__()
         assert d_model % num_heads == 0, "d_model должно быть кратно num_heads"
@@ -33,23 +35,37 @@ class TverskyMultiHeadAttentionDropIn(nn.Module):
         else:
             self.omega = shared_omega
 
-        self.q_proj = self._build_tversky_layer(d_model, d_model, num_features, model_type)
-        self.k_proj = self._build_tversky_layer(d_model, d_model, num_features, model_type)
-        self.v_proj = self._build_tversky_layer(d_model, d_model, num_features, model_type)
-        self.o_proj = self._build_tversky_layer(d_model, d_model, num_features, model_type)
+        self.q_proj = self._build_tversky_layer(
+            d_model, d_model, num_features, model_type, intersection_reduction, difference_type
+        )
+        self.k_proj = self._build_tversky_layer(
+            d_model, d_model, num_features, model_type, intersection_reduction, difference_type
+        )
+        self.v_proj = self._build_tversky_layer(
+            d_model, d_model, num_features, model_type, intersection_reduction, difference_type
+        )
+        self.o_proj = self._build_tversky_layer(
+            d_model, d_model, num_features, model_type, intersection_reduction, difference_type
+        )
 
         self._tie_feature_banks()
 
     def _build_tversky_layer(
-        self, in_dim: int, out_dim: int, num_features: int, model_type: ModelType | str
+        self,
+        in_dim: int,
+        out_dim: int,
+        num_features: int,
+        model_type: ModelType | str,
+        intersection_reduction: IntersectionReductionType | str,
+        difference_type: DifferenceType | str,
     ) -> TverskyProjection:
         return TverskyProjection(
             in_features=in_dim,
             out_features=out_dim,
             num_features=num_features,
             model_type=model_type,
-            intersection_reduction=IntersectionReductionType.PRODUCT,
-            difference_type=DifferenceType.SUBTRACT_MATCH,
+            intersection_reduction=intersection_reduction,
+            difference_type=difference_type,
         )
 
     def _tie_feature_banks(self) -> None:
