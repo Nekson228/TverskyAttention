@@ -1,27 +1,8 @@
-from enum import StrEnum
-
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-
-class ModelType(StrEnum):
-    CONTRAST = "contrast"
-    RATIO = "ratio"
-
-
-class IntersectionReduction(StrEnum):
-    MIN = "min"
-    MAX = "max"
-    PRODUCT = "product"
-    MEAN = "mean"
-    GMEAN = "gmean"
-    SOFTMIN = "softmin"
-
-
-class DifferenceType(StrEnum):
-    IGNORE_MATCH = "ignorematch"
-    SUBTRACT_MATCH = "subtractmatch"
+from src.enums import DifferenceType, IntersectionReductionType, ModelType
 
 
 class TverskySimilarity(nn.Module):
@@ -36,7 +17,8 @@ class TverskySimilarity(nn.Module):
         alpha: float = 0.5,
         beta: float = 0.5,
         model_type: ModelType | str = ModelType.RATIO,
-        intersection_reduction: IntersectionReduction | str = IntersectionReduction.MIN,
+        intersection_reduction: IntersectionReductionType
+        | str = IntersectionReductionType.MIN,
         difference_type: DifferenceType | str = DifferenceType.SUBTRACT_MATCH,
     ) -> None:
         super().__init__()
@@ -44,7 +26,7 @@ class TverskySimilarity(nn.Module):
         self.dim = dim
         self.num_features = num_features
         self.model_type = ModelType(model_type)
-        self.intersection_reduction = IntersectionReduction(intersection_reduction)
+        self.intersection_reduction = IntersectionReductionType(intersection_reduction)
         self.difference_type = DifferenceType(difference_type)
 
         self.feature_bank = nn.Parameter(torch.empty(dim, num_features))
@@ -82,37 +64,38 @@ class TverskySimilarity(nn.Module):
         f_a_minus_b = self._compute_difference(a_proj, b_proj, a_pos_mask, b_pos_mask)
         f_b_minus_a = self._compute_difference(b_proj, a_proj, b_pos_mask, a_pos_mask)
 
-        if self.model_type == ModelType.CONTRAST:
-            return (
-                self.theta * f_intersect
-                - self.alpha * f_a_minus_b
-                - self.beta * f_b_minus_a
-            )
-        elif self.model_type == ModelType.RATIO:
-            denominator = (
-                f_intersect
-                + self.alpha * f_a_minus_b
-                + self.beta * f_b_minus_a
-                + self.theta
-            )
-            return f_intersect / denominator
+        match self.model_type:
+            case ModelType.CONTRAST:
+                return (
+                    self.theta * f_intersect
+                    - self.alpha * f_a_minus_b
+                    - self.beta * f_b_minus_a
+                )
+            case ModelType.RATIO:
+                denominator = (
+                    f_intersect
+                    + self.alpha * f_a_minus_b
+                    + self.beta * f_b_minus_a
+                    + self.theta
+                )
+                return f_intersect / denominator
 
     def _reduce_intersection(
         self, a_proj: torch.Tensor, b_proj: torch.Tensor
     ) -> torch.Tensor:
         """Агрегация общих признаков на основе выбранного метода Ψ."""
         match self.intersection_reduction:
-            case IntersectionReduction.MIN:
+            case IntersectionReductionType.MIN:
                 return torch.minimum(a_proj, b_proj)
-            case IntersectionReduction.MAX:
+            case IntersectionReductionType.MAX:
                 return torch.maximum(a_proj, b_proj)
-            case IntersectionReduction.PRODUCT:
+            case IntersectionReductionType.PRODUCT:
                 return a_proj * b_proj
-            case IntersectionReduction.MEAN:
+            case IntersectionReductionType.MEAN:
                 return (a_proj + b_proj) / 2.0
-            case IntersectionReduction.GMEAN:
+            case IntersectionReductionType.GMEAN:
                 return torch.sqrt(torch.relu(a_proj * b_proj) + 1e-7)
-            case IntersectionReduction.SOFTMIN:
+            case IntersectionReductionType.SOFTMIN:
                 stacked = torch.stack([a_proj, b_proj], dim=-1)
                 weights = F.softmin(stacked, dim=-1)
                 return torch.sum(stacked * weights, dim=-1)

@@ -1,7 +1,8 @@
 import torch
 import torch.nn as nn
 
-from .similarity import TverskySimilarity
+from src.enums import ModelType, IntersectionReductionType, DifferenceType
+from src.arhitecture import TverskySimilarity
 
 
 class TverskyProjection(nn.Module):
@@ -15,9 +16,9 @@ class TverskyProjection(nn.Module):
         in_features: int,
         out_features: int,
         num_features: int,
-        model_type: str = "contrast",
-        intersection_reduction: str = "min",
-        difference_type: str = "subtractmatch",
+        model_type: ModelType | str = ModelType.CONTRAST,
+        intersection_reduction: IntersectionReductionType | str = IntersectionReductionType.MIN,
+        difference_type: DifferenceType | str = DifferenceType.SUBTRACT_MATCH,
     ) -> None:
         super().__init__()
         self.in_features = in_features
