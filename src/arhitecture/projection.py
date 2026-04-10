@@ -23,6 +23,7 @@ class TverskyProjection(nn.Module):
         super().__init__()
         self.in_features = in_features
         self.out_features = out_features
+        self.num_features = num_features
 
         self.similarity = TverskySimilarity(
             dim=in_features,
@@ -32,23 +33,27 @@ class TverskyProjection(nn.Module):
             difference_type=difference_type,
         )
 
-        self.prototypes = nn.Parameter(torch.empty(out_features, in_features))
+        self.prototypes = nn.Parameter(torch.empty(out_features, num_features))
         nn.init.xavier_uniform_(self.prototypes)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         """
         Args:
-            x: Входной тензор формы (batch_size, in_features)
+            x: Входной тензор формы (..., in_features)
         Returns:
-            Тензор логитов сходства формы (batch_size, out_features)
+            Тензор логитов сходства формы (..., out_features)
         """
+        leading_dims = x.shape[:-1]
+
+        x_proj = x @ self.similarity.feature_bank  # (..., num_features)
+
         # Расширяем размерности для попарного сравнения каждого объекта в батче с каждым прототипом
-        # (batch_size, out_features, in_features)
-        x_expanded = x.unsqueeze(1).expand(-1, self.out_features, -1)
+        # (..., 1, num_features) -> (..., out_features, num_features)
+        x_proj_expanded = x_proj.unsqueeze(-2).expand(*leading_dims, self.out_features, self.num_features)
 
-        # (batch_size, out_features, in_features)
-        prot_expanded = self.prototypes.unsqueeze(0).expand(x.shape[0], -1, -1)
+        # (..., out_features, num_features)
+        prot_expanded = self.prototypes.unsqueeze(0).expand(*leading_dims, self.out_features, self.num_features)
 
-        # (batch_size, out_features)
-        logits = self.similarity(x_expanded, prot_expanded)
+        # (..., out_features)
+        logits = self.similarity.forward_from_projections(x_proj_expanded, prot_expanded)
         return logits
