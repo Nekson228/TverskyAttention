@@ -1,12 +1,12 @@
-from enum import StrEnum
+from enum import Enum
 
 
-class ModelType(StrEnum):
+class ModelType(str, Enum):
     CONTRAST = "contrast"
     RATIO = "ratio"
 
 
-class IntersectionReductionType(StrEnum):
+class IntersectionReductionType(str, Enum):
     MIN = "min"
     MAX = "max"
     PRODUCT = "product"
@@ -15,6 +15,6 @@ class IntersectionReductionType(StrEnum):
     SOFTMIN = "softmin"
 
 
-class DifferenceType(StrEnum):
+class DifferenceType(str, Enum):
     IGNORE_MATCH = "ignorematch"
     SUBTRACT_MATCH = "subtractmatch"
