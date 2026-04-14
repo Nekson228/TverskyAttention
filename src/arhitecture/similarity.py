@@ -105,23 +105,21 @@ class TverskySimilarity(nn.Module):
 
     def _compute_difference(
         self,
-        x_proj: torch.Tensor,
-        y_proj: torch.Tensor,
-        x_pos_mask: torch.Tensor,
-        y_pos_mask: torch.Tensor,
+        a_proj: torch.Tensor,
+        b_proj: torch.Tensor,
+        a_pos_mask: torch.Tensor,
+        b_pos_mask: torch.Tensor,
     ) -> torch.Tensor:
-        """
-        Вычисление разности множеств (признаки, присутствующие в X, но отсутствующие или более слабые в Y).
-        """
-        # Строгое игнорирование: признак есть в X (>0), но нет в Y (<=0)
-        ignorematch_mask = x_pos_mask * (y_proj <= 0).float()
-        f_i = torch.sum(x_proj * ignorematch_mask, dim=-1)
+        """Вычисление разности множеств."""
+        # Строгое игнорирование: признак есть в A, но нет в B
+        ignorematch_mask = a_pos_mask * (b_proj <= 0).float()
+        f_i = torch.sum(a_proj * ignorematch_mask, dim=-1)
 
-        if self.difference_type == DifferenceType.IGNORE_MATCH:
-            return f_i
-        elif self.difference_type == DifferenceType.SUBTRACT_MATCH:
-            # Вычитание совпадений: добавляем признаки, которые есть в обоих объектах, но в X они выражены сильнее
-            subtract_mask = x_pos_mask * y_pos_mask * (x_proj > y_proj).float()
-            f_s = f_i + torch.sum((x_proj - y_proj) * subtract_mask, dim=-1)
-            return f_s
-        raise ValueError(f"Unsupported difference type: {self.difference_type}")
+        match self.difference_type:
+            case DifferenceType.IGNORE_MATCH:
+                return f_i
+            case DifferenceType.SUBTRACT_MATCH:
+                # Вычитание совпадений: признкак есть в обоих объектах, но в A он выражены сильнее
+                subtract_mask = a_pos_mask * b_pos_mask * (a_proj > b_proj).float()
+                f_s = f_i + torch.sum((a_proj - b_proj) * subtract_mask, dim=-1)
+                return f_s
