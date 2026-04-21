@@ -19,6 +19,7 @@ class TverskyProjection(nn.Module):
         model_type: ModelType | str = ModelType.CONTRAST,
         intersection_reduction: IntersectionReductionType | str = IntersectionReductionType.MIN,
         difference_type: DifferenceType | str = DifferenceType.SUBTRACT_MATCH,
+        feature_bank: nn.Parameter | None = None,
     ) -> None:
         super().__init__()
         self.in_features = in_features
@@ -31,6 +32,7 @@ class TverskyProjection(nn.Module):
             model_type=model_type,
             intersection_reduction=intersection_reduction,
             difference_type=difference_type,
+            feature_bank=feature_bank,
         )
 
         self.prototypes = nn.Parameter(torch.empty(out_features, num_features))
@@ -49,10 +51,14 @@ class TverskyProjection(nn.Module):
 
         # Расширяем размерности для попарного сравнения каждого объекта в батче с каждым прототипом
         # (..., 1, num_features) -> (..., out_features, num_features)
-        x_proj_expanded = x_proj.unsqueeze(-2).expand(*leading_dims, self.out_features, self.num_features)
+        x_proj_expanded = x_proj.unsqueeze(-2).expand(
+            *leading_dims, self.out_features, self.num_features
+        )
 
         # (..., out_features, num_features)
-        prot_expanded = self.prototypes.unsqueeze(0).expand(*leading_dims, self.out_features, self.num_features)
+        prot_expanded = self.prototypes.unsqueeze(0).expand(
+            *leading_dims, self.out_features, self.num_features
+        )
 
         # (..., out_features)
         logits = self.similarity.forward_from_projections(x_proj_expanded, prot_expanded)

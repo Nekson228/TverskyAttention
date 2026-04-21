@@ -1,7 +1,6 @@
 import torch
 import torch.nn as nn
 import math
-from typing import Optional
 
 from src.arhitecture import TverskyProjection
 from src.enums import ModelType, IntersectionReductionType, DifferenceType
@@ -17,7 +16,7 @@ class TverskyMultiHeadAttentionDropIn(nn.Module):
         d_model: int,
         num_heads: int,
         num_features: int,
-        shared_omega: Optional[nn.Parameter] = None,
+        feature_bank: nn.Parameter | None = None,
         model_type: ModelType | str = ModelType.CONTRAST,
         intersection_reduction: IntersectionReductionType | str = IntersectionReductionType.PRODUCT,
         difference_type: DifferenceType | str = DifferenceType.SUBTRACT_MATCH,
@@ -29,32 +28,22 @@ class TverskyMultiHeadAttentionDropIn(nn.Module):
         self.num_heads = num_heads
         self.d_k = d_model // num_heads
 
-        if shared_omega is None:
-            self.omega = nn.Parameter(torch.empty(d_model, num_features))
-            nn.init.xavier_uniform_(self.omega)
-        else:
-            self.omega = shared_omega
+        if feature_bank is None:
+            feature_bank = nn.Parameter(torch.empty(d_model, num_features))
+            nn.init.xavier_uniform_(feature_bank)
 
-        self.q_proj = TverskyProjection(
-            d_model, d_model, num_features, model_type, intersection_reduction, difference_type
+        proj_args = (
+            d_model,
+            d_model,
+            num_features,
+            model_type,
+            intersection_reduction,
+            difference_type,
+            feature_bank,
         )
-        self.k_proj = TverskyProjection(
-            d_model, d_model, num_features, model_type, intersection_reduction, difference_type
+        self.q_proj, self.k_proj, self.v_proj, self.o_proj = (
+            TverskyProjection(*proj_args) for _ in range(4)
         )
-        self.v_proj = TverskyProjection(
-            d_model, d_model, num_features, model_type, intersection_reduction, difference_type
-        )
-        self.o_proj = TverskyProjection(
-            d_model, d_model, num_features, model_type, intersection_reduction, difference_type
-        )
-
-        self._tie_feature_banks()
-
-    def _tie_feature_banks(self) -> None:
-        self.q_proj.similarity.feature_bank = self.omega
-        self.k_proj.similarity.feature_bank = self.omega
-        self.v_proj.similarity.feature_bank = self.omega
-        self.o_proj.similarity.feature_bank = self.omega
 
     def forward(self, x: torch.Tensor, mask: torch.Tensor | None = None) -> torch.Tensor:
         """

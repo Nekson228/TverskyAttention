@@ -16,6 +16,7 @@ class TverskySimilarity(nn.Module):
         num_features: int,
         alpha: float = 0.5,
         beta: float = 0.5,
+        feature_bank: nn.Parameter | None = None,
         model_type: ModelType | str = ModelType.RATIO,
         intersection_reduction: IntersectionReductionType | str = IntersectionReductionType.MIN,
         difference_type: DifferenceType | str = DifferenceType.SUBTRACT_MATCH,
@@ -28,8 +29,11 @@ class TverskySimilarity(nn.Module):
         self.intersection_reduction = IntersectionReductionType(intersection_reduction)
         self.difference_type = DifferenceType(difference_type)
 
-        self.feature_bank = nn.Parameter(torch.empty(dim, num_features))
-        nn.init.xavier_uniform_(self.feature_bank)
+        if feature_bank is not None:
+            self.feature_bank = feature_bank
+        else:
+            self.feature_bank = nn.Parameter(torch.empty(dim, num_features))
+            nn.init.xavier_uniform_(self.feature_bank)
 
         self.alpha = nn.Parameter(torch.tensor(alpha))
         self.beta = nn.Parameter(torch.tensor(beta))
