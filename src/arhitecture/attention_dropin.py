@@ -32,17 +32,17 @@ class TverskyMultiHeadAttentionDropIn(nn.Module):
             feature_bank = nn.Parameter(torch.empty(d_model, num_features))
             nn.init.xavier_uniform_(feature_bank)
 
-        proj_args = (
-            d_model,
-            d_model,
-            num_features,
-            model_type,
-            intersection_reduction,
-            difference_type,
-            feature_bank,
-        )
         self.q_proj, self.k_proj, self.v_proj, self.o_proj = (
-            TverskyProjection(*proj_args) for _ in range(4)
+            TverskyProjection(
+                d_model,
+                d_model,
+                num_features,
+                model_type,
+                intersection_reduction,
+                difference_type,
+                feature_bank,
+            )
+            for _ in range(4)
         )
 
     def forward(self, x: torch.Tensor, mask: torch.Tensor | None = None) -> torch.Tensor:
