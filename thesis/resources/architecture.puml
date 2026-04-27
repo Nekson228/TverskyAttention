@@ -1,0 +1,88 @@
+@startuml
+
+    class TverskyGPT {
+        +max_seq_len: int
+        +token_emb: Embedding
+        +pos_emb: Embedding
+        +blocks: ModuleList<TverskyBlock>
+        +ln_f: LayerNorm
+        +head: Linear
+        +__init__(vocab_size, d_model, num_layers, num_heads, num_features, max_seq_len, ...)
+        +forward(x: Tensor, mask: Tensor) Tensor
+    }
+
+    class TverskyBlock {
+        +ln_1: LayerNorm
+        +attn: TverskyMultiHeadAttentionDropIn
+        +ln_2: LayerNorm
+        +mlp: Sequential
+        +__init__(d_model, num_heads, num_features, ...)
+        +forward(x: Tensor, mask: Tensor) Tensor
+    }
+
+    class TverskyMultiHeadAttentionDropIn {
+        +d_model: int
+        +num_heads: int
+        +d_k: int
+        +q_proj: TverskyProjection
+        +k_proj: TverskyProjection
+        +v_proj: TverskyProjection
+        +o_proj: TverskyProjection
+        +__init__(d_model, num_heads, num_features, feature_bank, ...)
+        +forward(x: Tensor, mask: Tensor) Tensor
+    }
+
+    class TverskyProjection {
+        +in_features: int
+        +out_features: int
+        +num_features: int
+        +similarity: TverskySimilarity
+        +__init__(in_features, out_features, num_features, ...)
+        +forward(x: Tensor) Tensor
+    }
+
+    class TverskySimilarity {
+        +dim: int
+        +num_features: int
+        +alpha: float
+        +beta: float
+        +model_type: ModelType
+        +intersection_reduction: IntersectionReductionType
+        +difference_type: DifferenceType
+        +__init__(dim, num_features, alpha, beta, ...)
+        +forward(x: Tensor, feature_bank: Tensor) Tensor
+    }
+
+    TverskyGPT *-- TverskyBlock : contains
+    TverskyBlock *-- TverskyMultiHeadAttentionDropIn : contains
+    TverskyMultiHeadAttentionDropIn *-- TverskyProjection : contains
+    TverskyProjection *-- TverskySimilarity : contains
+    
+    
+      class ModelType {
+        <<enumeration>>
+        CONTRAST
+        RATIO
+    }
+
+    class IntersectionReductionType {
+        <<enumeration>>
+        MIN
+        MAX
+        PRODUCT
+        MEAN
+        GMEAN
+        SOFTMIN
+    }
+
+    class DifferenceType {
+        <<enumeration>>
+        IGNORE_MATCH
+        SUBTRACT_MATCH
+    }
+    
+    TverskySimilarity --* ModelType : contains
+    TverskySimilarity --* IntersectionReductionType : contains
+    TverskySimilarity --* DifferenceType : contains
+
+@enduml
