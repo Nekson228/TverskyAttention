@@ -1,16 +1,18 @@
+from typing import Iterator
+
 import torch
 from torch.utils.data import IterableDataset
 
 
 class TextChunkDataset(IterableDataset):
-    def __init__(self, tokenized_text, seq_len: int):
+    def __init__(self, tokenized_text: list[str], seq_len: int):
         self.tokens = tokenized_text
         self.seq_len = seq_len
 
     def __len__(self) -> int:
         return (len(self.tokens) - self.seq_len) // self.seq_len
 
-    def __iter__(self):
+    def __iter__(self) -> Iterator[tuple[torch.Tensor, torch.Tensor]]:
         for i in range(0, len(self.tokens) - self.seq_len, self.seq_len):
             chunk = self.tokens[i : i + self.seq_len + 1]
             x = torch.tensor(chunk[:-1], dtype=torch.long)
