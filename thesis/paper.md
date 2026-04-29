@@ -260,7 +260,7 @@ $$
 ![TverskyMultiHeadAttentionDropIn](./resources/TverskyAttention.png)
 
 **TverskyBlock**
-Этот класс является наследником `nn.Module` и реализует блок Transformer, в котором слой Multi-Head Attention заменен на `TverskyMultiHeadAttentionDropIn`. Инициализируется теми же параметрами, что и `TverskyMultiHeadAttentionDropIn`. Метод `forward` выполняет вычисление по схеме Pre-LN:
+Этот класс является наследником `nn.Module` и реализует блок Transformer, в котором слой Multi-Head Attention заменен на `TverskyMultiHeadAttentionDropIn`. Инициализируется теми же параметрами, что и `TverskyMultiHeadAttentionDropIn`. Метод `forward` выполняет вычисление по схеме Pre-LN, что позволяет стабилизировать обучение [10]:
 
 $$
 \begin{aligned}
@@ -444,3 +444,5 @@ $$
 8. Zhenzhong L., Mingda C., Sebastian G., Kevin G., Piyush S., Radu S. "ALBERT: A Lite BERT for Self-supervised Learning of Language Representations" [Электронный ресурс]. URL: <https://arxiv.org/pdf/1909.11942> (дата обращения: 16.03.2025).
 
 9. Magauiya Z., Dmitriy S., Ammar A., Stamatios L. "Share Your Attention: Transformer Weight Sharing via Matrix-based Dictionary Learning" [Электронный ресурс]. URL: <https://arxiv.org/pdf/2508.04581> (дата обращения: 16.03.2025).
+
+10. Xiong R., Yang Y. 3 He D., Zheng K., Zheng S., Xing C., Zhang H. Lan Y. Wang L., Liu T.-Y. "On Layer Normalization in the Transformer Architecture" [Электронный ресурс]. URL: <https://arxiv.org/pdf/2002.04745> (дата обращения: 29.03.2025).
