@@ -1,4 +1,4 @@
-from typing import Iterator
+from collections.abc import Iterator
 
 import torch
 from torch.utils.data import IterableDataset
