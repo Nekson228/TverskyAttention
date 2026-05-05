@@ -14,7 +14,7 @@ ETU Diploma
 1. **Cклонировать репозиторий**
 
    ```bash
-   git clone <repo-url>
+   git clone https://github.com/Nekson228/TverskyAttention.git
    cd TverskyAttention
    ```
 
@@ -24,7 +24,7 @@ ETU Diploma
    uv sync
    ```
 
-   Команда создаст виртуальное окружение и установит все зависимости из [`pyproject.toml`](pyproject.toml), включая PyTorch (CPU-сборка) из настроенного индекса.
+   Команда создаст виртуальное окружение и установит все зависимости из [`pyproject.toml`](pyproject.toml).
 
 3. **Запустить Jupyter-ноутбуки**
 
@@ -32,7 +32,7 @@ ETU Diploma
    uv run jupyter notebook
    ```
 
-> **Примечание:** PyTorch устанавливается из CPU-only индекса (`https://download.pytorch.org/whl/cpu`). Для поддержки GPU обновите секцию `[tool.uv.sources]` в [`pyproject.toml`](pyproject.toml) и повторно выполните `uv sync`.
+> **Примечание:** PyTorch устанавливается из [CPU-only индекса](https://download.pytorch.org/whl/cpu). Для поддержки GPU обновите секцию `[tool.uv.sources]` в [`pyproject.toml`](pyproject.toml) и повторно выполните `uv sync`.
 
 ---
 
@@ -41,19 +41,13 @@ ETU Diploma
 ```
 TverskyAttention/
 ├── data/                   # Локальное хранилище датасетов
-│   ├── raw/                # Исходные данные
 │   └── processed/          # Предобработанные и токенизированные данные
 ├── notebooks/              # Jupyter блокноты
 ├── src/                    # Основной исходный код проекта
-│   ├── data_prep/          # Скрипты загрузки и подготовки данных
-│   ├── architecture/       # Архитектура нейросетей
-│   ├── train/              # Скрипты с циклами обучения
-│   └── evaluation/         # Скрипты для оценки моделей
-├── models/                 # Сохраненные чекпоинты и веса обученных моделей
+│   ├── datasets/           # Скрипты загрузки и подготовки данных
+│   └── architecture/       # Архитектура нейросетей
+├── models/                 # Сохраненные веса обученных моделей
 ├── thesis/                 # Материалы дипломной работы
-│   ├── figures/            # Графики, диаграммы и визуализации внимания
-│   └── report/             # Исходники текста ВКР
-├── .gitignore
-├── pyproject.toml
+│   └── resources/          # Графики, схемы и визуализации
 └── README.md               # Описание проекта и инструкции по запуску
 ```
